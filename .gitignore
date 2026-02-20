@@ -1,0 +1,27 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*.tfvars
+
+# Terraform lock
+.terraform.lock.hcl
+
+# AWS CLI zip
+awscliv2.zip
+
+# SSH Keys
+*.pem
+*.key
+.ssh/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
