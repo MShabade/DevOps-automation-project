@@ -1,9 +1,12 @@
-name: Deploy to EC2
+name: Deploy Flask App to EC2
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'app/**'      # trigger only when app folder changes
+      - '.github/workflows/**'
 
 jobs:
   deploy:
@@ -23,20 +26,35 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
 
-      - name: Deploy Docker container on EC2
+      - name: Deploy Flask app Docker container on EC2
         run: |
           ssh -i ~/.ssh/id_rsa ec2-user@$EC2_HOST "
+            # Install Docker and git if not already installed
             if ! command -v docker &> /dev/null; then
               sudo yum update -y
               sudo amazon-linux-extras enable docker
-              sudo yum install -y docker
+              sudo yum install -y docker git
               sudo systemctl start docker
               sudo systemctl enable docker
               sudo usermod -aG docker ec2-user
             fi
-            docker pull nginx:latest
-            docker stop webserver || true
-            docker rm webserver || true
-            docker run -d -p 80:80 --name webserver nginx:latest
-          "
 
+            # Remove old repo folder
+            rm -rf ~/app
+
+            # Clone latest repo
+            git clone https://github.com/MShabade/DevOps-automation-project.git ~/app
+
+            # Navigate to app folder
+            cd ~/app/app
+
+            # Build Docker image
+            docker build -t flask-app .
+
+            # Stop and remove old container
+            docker stop flask-app || true
+            docker rm flask-app || true
+
+            # Run new container (Flask app runs on port 5000, exposed as 80)
+            docker run -d -p 80:5000 --name flask-app flask-app
+          "
